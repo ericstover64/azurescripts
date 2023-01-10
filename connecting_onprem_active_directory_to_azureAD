@@ -1,0 +1,28 @@
+# Import the required modules
+Import-Module ADSync
+Import-Module AzureAD
+
+# Connect to Azure AD
+$Cred = Get-Credential
+Connect-AzureAD -Credential $Cred
+
+# Download and install Azure AD Connect
+$DownloadLink = "https://go.microsoft.com/fwlink/?linkid=859891"
+$Destination = "$env:TEMP\AzureADConnect.exe"
+Start-BitsTransfer -Source $DownloadLink -Destination $Destination
+Start-Process -FilePath $Destination -ArgumentList "/quiet" -Wait
+
+# Run the Azure AD Connect Configuration Wizard
+$SyncService = "ADSync"
+$SyncCred = Get-Credential -Message "Enter the credentials for the synchronization service"
+$LocalADForest = "Contoso.com"
+$AzureADTenantName = (Get-AzureADTenantDetail).DisplayName
+Start-ADSyncSyncCycle -PolicyType Initial -Credential $SyncCred -AzureADTenantName $AzureADTenantName -LocalADForest $LocalADForest -SyncService $SyncService
+
+The script first imports the required modules, 'ABSync' and 'AzureAD'. 
+Then it prompts the user to enter their Azure AD credentials to connect to Azure AD. 
+Next, it downloads and installs Azure AD Connect, and runs the configuration wizard to set up the synchronization.
+
+You'll need to specify your AD forest and Tenantname, and configure the credentials accordingly. Also this script runs the Initial sync, once this is done you can schedule it to run after some regular intervals as per your organization requirement.
+
+It's important to note that this script is just an example and may require modification to work in your specific environment.
