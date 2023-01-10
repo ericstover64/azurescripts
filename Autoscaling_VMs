@@ -1,0 +1,32 @@
+# Import the Azure module
+Import-Module Azure
+
+# Connect to your Azure account
+Connect-AzAccount
+
+# Set the variables for the resource group, scale set, and desired number of VMs
+$resourceGroup = "MyResourceGroup"
+$scaleSetName = "MyScaleSet"
+$desiredVmCount = 2
+
+# Get the current number of VMs in the scale set
+$currentVmCount = (Get-AzVmss -ResourceGroupName $resourceGroup -VMScaleSetName $scaleSetName).Capacity
+
+# Compare the current and desired number of VMs
+If ($currentVmCount -eq $desiredVmCount) {
+    # If they are the same, do nothing
+    Write-Output "No scaling is needed"
+} Else {
+    # If they are different, scale the scale set
+    Write-Output "Scaling the scale set"
+    Set-AzVmss -ResourceGroupName $resourceGroup -VMScaleSetName $scaleSetName -Capacity $desiredVmCount
+}
+
+
+This script uses the Azure Powershell module to connect to your azure account and then gets the current number of virtual machines in the scale set.
+It then compares that number of VMs that you set in the script, and if they are different, it scales the scale set to the desired number.
+
+You can call this script on schedule, run it periodically to check if number of VMs are enough for workload or runnning the script on trigger, if some defined condition occur, it will increase or decrease number of VMs based on that.
+You can even use Azure Autoscale feature to schedule the scale up and down of virtual machine scale sets vased on metrics such as CPU utilization.
+
+You'll also need to replace 'MyResourceGroup' and 'MyScaleSet' with the actual name of your resource group and scale set,respectuvely, and define the number of VMs you want the script to set in the scale set, using the $desiredVmCount variable. 
