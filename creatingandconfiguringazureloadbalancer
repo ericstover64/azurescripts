@@ -1,0 +1,43 @@
+# Login to Azure
+Connect-AzAccount
+
+# Select the subscription where the VMs and Load Balancer will be created
+Select-AzSubscription -SubscriptionName "My Subscription"
+
+# Create a resource group for the VMs and Load Balancer
+New-AzResourceGroup -Name "MyResourceGroup" -Location "East US"
+
+# Create the VMs
+$vm1 = New-AzVM -ResourceGroupName "MyResourceGroup" -Name "VM1" -Image "WindowsServer2016Datacenter" -Size "Standard_DS2_v2" -Credential (Get-Credential)
+$vm2 = New-AzVM -ResourceGroupName "MyResourceGroup" -Name "VM2" -Image "WindowsServer2016Datacenter" -Size "Standard_DS2_v2" -Credential (Get-Credential)
+
+# Create a virtual network and subnet for the VMs and Load Balancer
+$vnet = New-AzVirtualNetwork -ResourceGroupName "MyResourceGroup" -Name "MyVNet" -AddressPrefix "10.0.0.0/16" -Location "East US"
+$subnet = Add-AzVirtualNetworkSubnetConfig -Name "MySubnet" -AddressPrefix "10.0.1.0/24" -VirtualNetwork $vnet
+
+# Add the VMs to the virtual network and subnet
+Add-AzNetworkInterface -Name "VM1Nic" -ResourceGroupName "MyResourceGroup" -SubnetId $subnet.Id -VirtualNetworkName $vnet.Name -PublicIpAddressId $vm1.PublicIps[0].Id -VM $vm1
+Add-AzNetworkInterface -Name "VM2Nic" -ResourceGroupName "MyResourceGroup" -SubnetId $subnet.Id -VirtualNetworkName $vnet.Name -PublicIpAddressId $vm2.PublicIps[0].Id -VM $vm2
+
+# Create a public IP address for the Load Balancer
+$pip = New-AzPublicIpAddress -ResourceGroupName "MyResourceGroup" -Name "MyPublicIp" -Location "East US" -AllocationMethod "Static"
+
+# Create the Load Balancer and associate it with the virtual network and subnet
+$lb = New-AzLoadBalancer -ResourceGroupName "MyResourceGroup" -Name "MyLoadBalancer" -Location "East US" -FrontendIpConfiguration (New-AzLoadBalancerFrontendIpConfig -Name "MyFrontendIp" -PublicIpAddressId $pip.Id) -BackendAddressPool (New-AzLoadBalancerBackendAddressPoolConfig -Name "MyBackendPool")
+$lb = Add-AzLoadBalancerSubnet -LoadBalancer $lb -Name "MyLoadBalancer" -SubnetId $subnet.Id
+
+# Add the VMs as backend pool members for the Load Balancer
+$lb = Add-AzLoadBalancerBackendAddressPoolMember -LoadBalancer $lb -BackendAddressPoolName "MyBackendPool" -IPAddress $vm1.PublicIps[0].IpAddress -VMId $vm1.Id
+$lb =
+
+The script that I provided creates the following resources:
+
+-A resource group to contain the VMs and Load Balancer.
+-Two virtual machines, VM1 and VM2.
+-A virtual network and subnet for the VMs and Load Balancer.
+-A public IP address for the Load Balancer.
+-An Azure Load Balancer
+
+And also it associates the Load Balancer with the virtual network and subnet and configures it to distribute incoming traffic across the two VMs that have been created before by adding them to the Load Balancer;s backend pool.
+It's important to keep in mind that this is just an example and you may need to modify it to suit your specific requirements. It should give you a good starting point, though, and you can use the Azure PowerShell cmdlets to customize it further as needed.
+Also, you may need to fill in the values for "-SubscriptionName,-Location, '-Name','Image', and '-Size." For "-Credential' you may need to input them as well.
